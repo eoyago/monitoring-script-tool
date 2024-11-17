@@ -91,18 +91,27 @@ Execute o script:
  ```
 O script começará a monitorar os nós da AWS e do GCP. Ele tentará enviar um e-mail para YOUR_GMAIL_EMAIL sempre que um nó ficar inacessível.
 
-Estrutura do Script
+Estrutura do Script:
+
 send_email(): Envia um e-mail para o endereço configurado, informando o status de um nó.
+
 monitor_node(): Realiza o ping em um nó e, caso ele esteja inacessível, chama send_email() para notificar.
+
 monitor_aws_nodes(): Monitora todos os nós da AWS.
+
 monitor_gcp_nodes(): Monitora todos os nós do GCP.
+
 get_aws_nodes(): Obtém os IPs públicos das instâncias EC2 na AWS usando aws-cli.
+
 get_gcp_nodes(): Obtém os IPs externos das instâncias no Google Cloud usando gcloud-cli.
+
 O script será executado em loop, verificando a conectividade de cada nó a cada 60 segundos.
 
-Logs
+Logs:
 Todos os eventos de conectividade e envio de e-mail serão registrados no arquivo network_status.log.
 
-Notas Adicionais
+Notas Adicionais:
+
 Segurança de E-mail: Se você usar uma conta de e-mail que não seja do Gmail, será necessário ajustar as configurações do msmtp para o seu servidor SMTP.
-Outros Nuvens: Para adicionar mais provedores de nuvem, você pode adaptar as funções get_aws_nodes e get_gcp_nodes para outros serviços, como Azure ou DigitalOcean.
+
+Outras Nuvens: Para adicionar mais provedores de nuvem, você pode adaptar as funções get_aws_nodes e get_gcp_nodes para outros serviços, como Azure ou DigitalOcean.
