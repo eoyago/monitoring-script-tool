@@ -89,7 +89,7 @@ Execute o script:
  ```bash
 ./network_monitor.sh
  ```
-O script começará a monitorar os nós da AWS e do GCP. Ele tentará enviar um e-mail para yagoga16@gmail.com sempre que um nó ficar inacessível.
+O script começará a monitorar os nós da AWS e do GCP. Ele tentará enviar um e-mail para YOUR_GMAIL_EMAIL sempre que um nó ficar inacessível.
 
 Estrutura do Script
 send_email(): Envia um e-mail para o endereço configurado, informando o status de um nó.
