@@ -6,17 +6,14 @@ EMAIL_TO="YOUR_GMAIL_EMAIL"
 send_email() {
     local node=$1
     local status=$2
-    echo "Enviando e-mail para $EMAIL_TO sobre o status de $node"
-    if ! echo -e "Subject: Alerta de Conectividade: $node\n\nO nó $node está $status em $(date)." | msmtp "$EMAIL_TO"; then
-        echo "$(date): Erro ao enviar e-mail para $node" >> "$LOG_FILE"
-    else
-        echo "$(date): E-mail enviado para $node" >> "$LOG_FILE"
-    fi
+    echo "Enviando e-mail sobre $node ($status)"
+    echo -e "Subject: Alerta de Conectividade: $node\n\nO nó $node está $status em $(date)." | msmtp "$EMAIL_TO" && \
+    echo "$(date): E-mail enviado sobre $node ($status)" >> "$LOG_FILE" || \
+    echo "$(date): Erro ao enviar e-mail sobre $node ($status)" >> "$LOG_FILE"
 }
 
-monitor_node() {
+check_node() {
     local node=$1
-    echo "Monitorando $node"
     if ping -c 1 -W 2 "$node" > /dev/null; then
         echo "$(date): $node está acessível" >> "$LOG_FILE"
     else
@@ -25,40 +22,33 @@ monitor_node() {
     fi
 }
 
-monitor_aws_nodes() {
-    local AWS_NODES=("$@")
-    echo "Monitorando AWS Nodes:"
-    for node in "${AWS_NODES[@]}"; do
-        monitor_node "$node"
+get_nodes() {
+    local provider=$1
+    case $provider in
+        aws) aws ec2 describe-instances --query 'Reservations[].Instances[].PublicIpAddress' --output text ;;
+        gcp) gcloud compute instances list --format="value(EXTERNAL_IP)" ;;
+        *) echo "Provedor desconhecido: $provider" ;;
+    esac
+}
+
+monitor_nodes() {
+    local provider=$1
+    local nodes=("$@")
+    echo "Monitorando nós de $provider: ${nodes[*]}"
+    for node in "${nodes[@]:1}"; do
+        check_node "$node"
     done
 }
 
-monitor_gcp_nodes() {
-    local GCP_NODES=("$@")
-    echo "Monitorando GCP Nodes:"
-    for node in "${GCP_NODES[@]}"; do
-        monitor_node "$node"
-    done
-}
+# Fluxo principal do script
+aws_nodes=($(get_nodes "aws"))
+gcp_nodes=($(get_nodes "gcp"))
 
-get_aws_nodes() {
-    AWS_NODES=$(aws ec2 describe-instances --query 'Reservations[].Instances[].PublicIpAddress' --output text)
-    echo "$AWS_NODES"
-}
-
-get_gcp_nodes() {
-    GCP_NODES=$(gcloud compute instances list --format="value(EXTERNAL_IP)")
-    echo "$GCP_NODES"
-}
-
-AWS_NODES=($(get_aws_nodes))
-GCP_NODES=($(get_gcp_nodes))
-
-echo "AWS Nodes: ${AWS_NODES[@]}"
-echo "GCP Nodes: ${GCP_NODES[@]}"
+echo "Nós AWS: ${aws_nodes[*]}"
+echo "Nós GCP: ${gcp_nodes[*]}"
 
 while true; do
-    monitor_aws_nodes "${AWS_NODES[@]}"
-    monitor_gcp_nodes "${GCP_NODES[@]}"
+    monitor_nodes "AWS" "${aws_nodes[@]}"
+    monitor_nodes "GCP" "${gcp_nodes[@]}"
     sleep 60
 done
